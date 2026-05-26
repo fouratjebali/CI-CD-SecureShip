@@ -1,0 +1,10 @@
+title = "SecureShip Gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Demo intentional vulnerabilities"
+paths = [
+  "app/config.py"
+]
