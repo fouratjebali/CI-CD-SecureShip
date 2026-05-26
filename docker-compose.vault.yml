@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: secureship-vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root-dev-token"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      VAULT_ADDR: "http://0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+    command: vault server -dev
+    volumes:
+      - vault_logs:/vault/logs
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: secureship-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: SuperSecret123
+      POSTGRES_DB: tasks
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: secureship-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@secureship.local
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_pass
+
+volumes:
+  vault_logs:
+  pg_data:
