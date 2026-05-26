@@ -1,11 +1,17 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from app.models import Task, TaskCreate
 from app.database import init_db, get_connection, get_task_by_title_unsafe
+from app.config import get_settings
 
 app = FastAPI(title="SecureShip Task API")
 
 @app.on_event("startup")
 def startup():
+    settings = get_settings()   
+    print(f"Secrets loaded from Vault — DB connected")
     init_db()
 
 @app.get("/")

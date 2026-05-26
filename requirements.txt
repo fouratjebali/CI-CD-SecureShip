@@ -6,3 +6,5 @@ python-jose==3.3.0
 cryptography==38.0.4
 pytest==7.4.0
 httpx==0.24.1
+hvac==2.1.0
+python-dotenv==1.0.0

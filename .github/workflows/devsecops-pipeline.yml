@@ -28,6 +28,26 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+        
+      - name: Fetch secrets from Vault
+       	run: |
+          pip install hvac python-dotenv
+          python - <<'EOF'
+          import hvac, os
+          client = hvac.Client(url=os.environ["VAULT_ADDR"])
+          client.auth.approle.login(
+              role_id=os.environ["VAULT_ROLE_ID"],
+              secret_id=os.environ["VAULT_SECRET_ID"]
+          )
+          secret = client.secrets.kv.v2.read_secret_version(
+              path="secureship/db", mount_point="secret"
+          )
+          print("Vault auth successful — secrets fetched")
+          EOF
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+          VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
 
       - name: Run pytest
         run: pytest tests/ -v --tb=short
