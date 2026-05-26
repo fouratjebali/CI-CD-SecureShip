@@ -7,11 +7,14 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+  security-events: write
+
 env:
   IMAGE_NAME: secureship-app
 
 jobs:
-  #0. Unit tests
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -29,7 +32,6 @@ jobs:
       - name: Run pytest
         run: pytest tests/ -v --tb=short
 
-  #1. SAST — SonarQube + Semgrep 
   sast:
     name: SAST (SonarQube + Semgrep)
     runs-on: ubuntu-latest
@@ -37,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
@@ -46,7 +48,7 @@ jobs:
             p/python
             p/owasp-top-ten
             p/secrets
-        continue-on-error: true  
+        continue-on-error: true
 
       - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@master
@@ -61,13 +63,15 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  #2. SCA — OWASP Dependency-Check 
   sca:
     name: SCA (OWASP Dependency-Check)
     runs-on: ubuntu-latest
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create reports directory
+        run: mkdir -p reports
 
       - name: Run OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
@@ -87,13 +91,15 @@ jobs:
           name: dependency-check-report
           path: reports/
 
-  #3. Docker build + Trivy image scan
   image-scan:
     name: Image Scan (Trivy)
     runs-on: ubuntu-latest
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create reports directory
+        run: mkdir -p reports
 
       - name: Build Docker image
         run: docker build -t $IMAGE_NAME:${{ github.sha }} .
@@ -115,13 +121,15 @@ jobs:
           name: trivy-report
           path: reports/trivy-results.txt
 
-  #4. IaC scan — Checkov
   iac-scan:
     name: IaC Scan (Checkov)
     runs-on: ubuntu-latest
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create reports directory
+        run: mkdir -p reports
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
@@ -138,7 +146,6 @@ jobs:
         with:
           sarif_file: reports/checkov-results.sarif
 
-  #5. Secret scan — Gitleaks + TruffleHog 
   secret-scan:
     name: Secret Scan (Gitleaks + TruffleHog)
     runs-on: ubuntu-latest
@@ -162,7 +169,6 @@ jobs:
           head: HEAD
           extra_args: --only-verified
 
-  #6. Security gate
   security-gate:
     name: Security Gate
     runs-on: ubuntu-latest
@@ -175,4 +181,4 @@ jobs:
           echo "Image scan passed"
           echo "IaC scan passed"
           echo "Secret scan passed"
-          echo "Pipeline cleared — ready for deployment phase"
+          echo "Pipeline cleared - ready for deployment phase"
