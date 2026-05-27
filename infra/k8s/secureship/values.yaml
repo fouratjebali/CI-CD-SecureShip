@@ -1,0 +1,31 @@
+replicaCount: 2
+
+image:
+  repository: secureship-app
+  tag: latest         
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+
+vault:
+  addr: "http://secureship-vault:8200"
+  roleId: ""      
+  secretId: ""
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
