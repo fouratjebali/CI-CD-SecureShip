@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: secureship-app
-  tag: latest         
+  tag: "1.0.0"         
   pullPolicy: IfNotPresent
 
 service:

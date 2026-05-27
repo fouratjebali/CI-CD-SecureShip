@@ -1,0 +1,21 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-non-root
+  annotations:
+    policies.kyverno.io/description: >
+      Blocks any pod that runs as root (uid 0).
+      All SecureShip containers must run as uid >= 1000.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: check-non-root
+      match:
+        resources:
+          kinds: [Pod]
+      validate:
+        message: "Running as root is not allowed. Set runAsNonRoot: true."
+        pattern:
+          spec:
+            securityContext:
+              runAsNonRoot: true

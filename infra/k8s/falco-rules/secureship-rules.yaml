@@ -1,0 +1,42 @@
+customRules:
+  secureship_rules.yaml: |-
+    - rule: Shell spawned in SecureShip container
+      desc: >
+        A shell was opened inside the SecureShip pod.
+        This is unexpected and likely indicates a container escape attempt.
+      condition: >
+        spawned_process and container
+        and container.name = "secureship"
+        and proc.name in (bash, sh, zsh, fish)
+      output: >
+        Shell opened in SecureShip container
+        (user=%user.name container=%container.name
+        image=%container.image.repository cmd=%proc.cmdline)
+      priority: CRITICAL
+      tags: [secureship, shell, T1059]
+
+    - rule: Unexpected outbound connection from SecureShip
+      desc: >
+        SecureShip made a network connection to an unexpected destination.
+        Expected destinations are Vault (8200) and PostgreSQL (5432) only.
+      condition: >
+        outbound and container
+        and container.name = "secureship"
+        and not fd.sport in (8200, 5432, 8000)
+      output: >
+        Unexpected outbound from SecureShip
+        (user=%user.name dest=%fd.rip:%fd.rport container=%container.name)
+      priority: WARNING
+      tags: [secureship, network, T1071]
+
+    - rule: Write to sensitive file in SecureShip
+      desc: Detects any write to /etc or /bin inside the SecureShip container.
+      condition: >
+        open_write and container
+        and container.name = "secureship"
+        and (fd.name startswith "/etc" or fd.name startswith "/bin")
+      output: >
+        Sensitive file write in SecureShip
+        (file=%fd.name user=%user.name container=%container.name)
+      priority: ERROR
+      tags: [secureship, filesystem, T1565]

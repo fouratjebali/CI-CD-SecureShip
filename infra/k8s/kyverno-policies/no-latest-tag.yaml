@@ -1,0 +1,31 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/description: >
+      Blocks pods using :latest image tag or images without explicit tags.
+      Unpinned images break reproducibility and make rollbacks impossible.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: check-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      validate:
+        message: "Images must use an explicit version tag, and ':latest' is not allowed."
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ regex_match('^.*:latest$', element.image) }}"
+                    operator: Equals
+                    value: true
+                  - key: "{{ regex_match('^.+:[^/]+$', element.image) }}"
+                    operator: Equals
+                    value: false
